@@ -111,7 +111,10 @@ impl Tokenizer {
                 while char != '"' {
                     builder.push(char);
                     self.consume();
-                    char = self.peek(0).unwrap();
+                    let Some(char_) = self.peek(0) else {
+                        return Err(Error::new(ErrorKind::Other, "Unterminated string literal"));
+                    };
+                    char = char_;
                 }
                 self.consume();
                 Ok(Token::new(TokenType::Literal(LiteralType::String), builder))

@@ -151,6 +151,12 @@ impl Interpreter {
                             TokenType::Literal(LiteralType::Number) => {
                                 println!("{}", next_token.value);
                             }
+                            TokenType::Assignment => {
+                                return Err(Error::new(
+                                    ErrorKind::Other,
+                                    "'print' is not assignable",
+                                ));
+                            }
                             _ => {}
                         }
                         let next_token = self.peek(2).unwrap();
@@ -166,8 +172,37 @@ impl Interpreter {
                             }
                         };
                         self.consume_times(3)?;
-                    } else if false {
-                        todo!()
+                    } else {
+                        let next_token = self.peek(1).unwrap();
+                        match next_token.token_type {
+                            TokenType::Assignment => {
+                                let ident_value_token = self.peek(2).unwrap();
+                                let TokenType::Literal(type_) = &ident_value_token.token_type
+                                else {
+                                    return Err(Error::new(
+                                        ErrorKind::Other,
+                                        format!("Expected literal, got {:?}", ident_value_token),
+                                    ));
+                                };
+                                self.mem.insert(
+                                    token.value.clone(),
+                                    IdentValue {
+                                        value: ident_value_token.value.clone(),
+                                        type_: type_.clone(),
+                                    },
+                                );
+                                check_for_semicolon!(self, 2);
+
+                                self.consume_times(3)?;
+                            }
+                            TokenType::OpenParen => todo!(),
+                            _ => {
+                                return Err(Error::new(
+                                    ErrorKind::Other,
+                                    format!("Unhandled token: {:?}", next_token),
+                                ));
+                            }
+                        }
                     }
                 }
                 TokenType::Semicolon => {
