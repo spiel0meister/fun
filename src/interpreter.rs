@@ -80,26 +80,40 @@ impl Interpreter {
                     }
                 }
                 TokenType::Keyword(KeywordType::Print) => {
-                    let ident = self.peek(1).unwrap();
-                    let Some(ident_value) = self.mem.get(&ident.value) else {
-                        return Err(Error::new(
-                            ErrorKind::Other,
-                            format!("Unknown identifier: {:?}", ident.value),
-                        ));
-                    };
-                    match ident_value.token_type {
-                        TokenType::Literal(LiteralType::Number) => {
-                            println!("{}", ident_value.value.parse::<f32>().unwrap());
+                    let next_token = self.peek(1).unwrap();
+                    match next_token.token_type {
+                        TokenType::Ident => {
+                            let Some(ident_value) = self.mem.get(&next_token.value) else {
+                                return Err(Error::new(
+                                    ErrorKind::Other,
+                                    format!("Unknown identifier: {:?}", next_token.value),
+                                ));
+                            };
+                            match ident_value.token_type {
+                                TokenType::Literal(LiteralType::Number) => {
+                                    println!("{}", ident_value.value.parse::<f32>().unwrap());
+                                }
+                                TokenType::Literal(LiteralType::String) => {
+                                    println!("{}", ident_value.value);
+                                }
+                                _ => {
+                                    panic!()
+                                }
+                            };
+                            check_for_semicolon!(self, 1);
+                            self.consume_times(1)?;
                         }
                         TokenType::Literal(LiteralType::String) => {
-                            println!("{}", ident_value.value);
+                            println!("{}", next_token.value);
+                            check_for_semicolon!(self, 1);
                         }
-                        _ => {
-                            panic!()
+                        TokenType::Literal(LiteralType::Number) => {
+                            println!("{}", next_token.value);
+                            check_for_semicolon!(self, 1);
                         }
-                    };
-                    check_for_semicolon!(self, 1);
-                    self.consume_times(3)?;
+                        _ => {}
+                    }
+                    self.consume_times(2)?;
                 }
                 TokenType::Semicolon => {
                     self.consume()?;
