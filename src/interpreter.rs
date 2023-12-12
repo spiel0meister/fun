@@ -18,6 +18,7 @@ macro_rules! check_for_semicolon {
     };
 }
 
+#[derive(Debug, Clone, PartialEq)]
 struct IdentValue {
     value: String,
     type_: LiteralType,
@@ -82,6 +83,7 @@ impl Interpreter {
                                             ),
                                         ));
                                     };
+
                                     self.mem.insert(
                                         ident_token.value.clone(),
                                         IdentValue {
@@ -89,37 +91,106 @@ impl Interpreter {
                                             type_: type_.clone(),
                                         },
                                     );
+
                                     check_for_semicolon!(self, 3);
 
                                     self.consume_times(4)?;
                                 }
                                 TokenType::Colon => {
                                     let type_token = self.peek(3).unwrap();
-                                    match type_token.value.as_str() {
-                                        "string" => {
-                                            self.mem.insert(
-                                                ident_token.value.clone(),
-                                                IdentValue {
-                                                    value: String::new(),
-                                                    type_: LiteralType::String,
-                                                },
-                                            );
+                                    let next_token = self.peek(4).unwrap();
+                                    match next_token.token_type {
+                                        TokenType::Assignment => {
+                                            let ident_value_token = self.peek(5).unwrap();
+                                            let TokenType::Literal(type_) =
+                                                &ident_value_token.token_type
+                                            else {
+                                                return Err(Error::new(
+                                                    ErrorKind::Other,
+                                                    format!(
+                                                        "Expected literal type, got {:?}",
+                                                        ident_value_token
+                                                    ),
+                                                ));
+                                            };
+
+                                            match type_token.value.as_str() {
+                                                "string" => {
+                                                    if type_.to_owned() != LiteralType::String {
+                                                        return Err(Error::new(
+                                                            ErrorKind::Other,
+                                                            format!(
+                                                                "Expected String, got {:?}: {:?}",
+                                                                type_, ident_value_token.value
+                                                            ),
+                                                        ));
+                                                    }
+
+                                                    self.mem.insert(
+                                                        ident_token.value.clone(),
+                                                        IdentValue {
+                                                            value: ident_value_token.value.clone(),
+                                                            type_: type_.clone(),
+                                                        },
+                                                    );
+                                                }
+                                                "number" => {
+                                                    if type_.to_owned() != LiteralType::Number {
+                                                        return Err(Error::new(
+                                                            ErrorKind::Other,
+                                                            format!(
+                                                                "Expected Number, got {:?}: {:?}",
+                                                                type_, ident_value_token.value
+                                                            ),
+                                                        ));
+                                                    }
+
+                                                    self.mem.insert(
+                                                        ident_token.value.clone(),
+                                                        IdentValue {
+                                                            value: ident_value_token.value.clone(),
+                                                            type_: type_.clone(),
+                                                        },
+                                                    );
+                                                }
+                                                _ => {
+                                                    return Err(Error::new(
+                                                        ErrorKind::Other,
+                                                        format!("Unknown type {:?}", type_token),
+                                                    ));
+                                                }
+                                            }
+
+                                            check_for_semicolon!(self, 5);
+
+                                            self.consume_times(2)?;
                                         }
-                                        "number" => {
-                                            self.mem.insert(
-                                                ident_token.value.clone(),
-                                                IdentValue {
-                                                    value: String::from("0"),
-                                                    type_: LiteralType::Number,
-                                                },
-                                            );
-                                        }
-                                        _ => {
-                                            return Err(Error::new(
-                                                ErrorKind::Other,
-                                                format!("Unknown type {:?}", type_token),
-                                            ));
-                                        }
+                                        _ => match type_token.value.as_str() {
+                                            "string" => {
+                                                self.mem.insert(
+                                                    ident_token.value.clone(),
+                                                    IdentValue {
+                                                        value: String::new(),
+                                                        type_: LiteralType::String,
+                                                    },
+                                                );
+                                            }
+                                            "number" => {
+                                                self.mem.insert(
+                                                    ident_token.value.clone(),
+                                                    IdentValue {
+                                                        value: String::from("0"),
+                                                        type_: LiteralType::Number,
+                                                    },
+                                                );
+                                            }
+                                            _ => {
+                                                return Err(Error::new(
+                                                    ErrorKind::Other,
+                                                    format!("Unknown type {:?}", type_token),
+                                                ));
+                                            }
+                                        },
                                     }
 
                                     self.consume_times(4)?;
@@ -142,7 +213,10 @@ impl Interpreter {
                                         else {
                                             return Err(Error::new(
                                                 ErrorKind::Other,
-                                                format!("Unknown identifier {:?}", next_token),
+                                                format!(
+                                                    "Unknown identifier {:?}",
+                                                    next_token.value
+                                                ),
                                             ));
                                         };
                                         match ident_value.type_ {
@@ -212,9 +286,30 @@ impl Interpreter {
                                 else {
                                     return Err(Error::new(
                                         ErrorKind::Other,
-                                        format!("Expected literal, got {:?}", ident_value_token),
+                                        format!(
+                                            "Expected literal type, got {:?}",
+                                            ident_value_token
+                                        ),
                                     ));
                                 };
+
+                                let Some(saved_value) = self.mem.get(&token.value) else {
+                                    return Err(Error::new(
+                                        ErrorKind::Other,
+                                        format!("Unknown identifier {:?}", token.value),
+                                    ));
+                                };
+
+                                if type_.to_owned() != saved_value.type_ {
+                                    return Err(Error::new(
+                                        ErrorKind::Other,
+                                        format!(
+                                            "Expected {:?}, got {:?}",
+                                            type_, saved_value.type_
+                                        ),
+                                    ));
+                                }
+
                                 self.mem.insert(
                                     token.value.clone(),
                                     IdentValue {

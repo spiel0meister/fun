@@ -22,7 +22,7 @@ fn main() -> std::io::Result<()> {
 
     let mut main_tokenizer = tokenizer::Tokenizer::new(content);
     let tokens = main_tokenizer.tokenize()?;
-    let mut main_interpreter = interpreter::Interpreter::new(tokens);
+    let mut main_interpreter = interpreter::Interpreter::new(tokens.clone());
 
     main_interpreter.interpret()?;
     Ok(())
