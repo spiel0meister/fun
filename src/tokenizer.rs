@@ -188,3 +188,8 @@ impl Tokenizer {
         Ok(self.tokens.to_vec())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+}
