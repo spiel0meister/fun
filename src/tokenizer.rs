@@ -2,18 +2,26 @@ use std::io::{Error, ErrorKind};
 
 macro_rules! keyword_case {
     ($tokenizer:ident, $keyword:literal, $keyword_type:expr) => {
-        $tokenizer.tokens.push(Token::new(
+        add_token!(
+            $tokenizer,
             TokenType::Keyword($keyword_type),
-            $keyword.to_string(),
-        ));
+            $keyword.to_string()
+        );
         $tokenizer.consume_times($keyword.len());
+    };
+}
+
+macro_rules! add_token {
+    ($tokenizer:ident, $token_type:expr, $token_value:expr) => {
+        $tokenizer
+            .tokens
+            .push(Token::new($token_type, $token_value));
     };
 }
 
 #[derive(Debug, Clone)]
 pub enum KeywordType {
     Let,
-    Print,
     None,
 }
 
@@ -28,6 +36,8 @@ pub enum TokenType {
     Assignment,
     Ident,
     Semicolon,
+    OpenParen,
+    CloseParen,
     Keyword(KeywordType),
     Literal(LiteralType),
 }
@@ -145,8 +155,6 @@ impl Tokenizer {
                 continue;
             } else if self.spells_out("let") {
                 keyword_case!(self, "let", KeywordType::Let);
-            } else if self.spells_out("print") {
-                keyword_case!(self, "print", KeywordType::Print);
             } else if self.spells_out("none") {
                 keyword_case!(self, "none", KeywordType::None);
             } else if char.is_ascii_alphabetic() {
@@ -159,10 +167,9 @@ impl Tokenizer {
                     self.consume();
                     char = self.peek(0).unwrap();
                 }
-                self.tokens.push(Token::new(TokenType::Ident, builder));
+                add_token!(self, TokenType::Ident, builder);
             } else if char == '=' {
-                self.tokens
-                    .push(Token::new(TokenType::Assignment, "=".to_string()));
+                add_token!(self, TokenType::Assignment, "=".to_string());
                 self.consume();
             } else if char == '"' {
                 self.consume();
@@ -172,8 +179,13 @@ impl Tokenizer {
                 let res = self.create_literal(LiteralType::Number)?;
                 self.tokens.push(res);
             } else if char == ';' {
-                self.tokens
-                    .push(Token::new(TokenType::Semicolon, ";".to_string()));
+                add_token!(self, TokenType::Semicolon, ";".to_string());
+                self.consume();
+            } else if char == '(' {
+                add_token!(self, TokenType::OpenParen, "(".to_string());
+                self.consume();
+            } else if char == ')' {
+                add_token!(self, TokenType::CloseParen, ")".to_string());
                 self.consume();
             } else {
                 return Err(Error::new(
@@ -186,9 +198,4 @@ impl Tokenizer {
         self.index = 0;
         Ok(self.tokens.to_vec())
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
 }

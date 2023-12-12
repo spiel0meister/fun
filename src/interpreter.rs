@@ -55,6 +55,10 @@ impl Interpreter {
         Ok(())
     }
 
+    fn get_ident_value_token(&self, token: &Token) -> Option<&Token> {
+        self.mem.get(&token.value)
+    }
+
     pub fn interpret(&mut self) -> std::io::Result<()> {
         while self.peek(0).is_some() {
             let token = self.peek(0).unwrap();
@@ -71,7 +75,7 @@ impl Interpreter {
                                         .insert(ident_token.value.clone(), ident_value.clone());
                                     check_for_semicolon!(self, 3);
 
-                                    self.consume_times(5)?;
+                                    self.consume_times(4)?;
                                 }
                                 _ => {}
                             }
@@ -79,41 +83,72 @@ impl Interpreter {
                         _ => {}
                     }
                 }
-                TokenType::Keyword(KeywordType::Print) => {
-                    let next_token = self.peek(1).unwrap();
-                    match next_token.token_type {
-                        TokenType::Ident => {
-                            let Some(ident_value) = self.mem.get(&next_token.value) else {
+                TokenType::Ident => {
+                    if token.value == "print" {
+                        let next_token = self.peek(1).unwrap();
+                        match next_token.token_type {
+                            TokenType::OpenParen => {
+                                let next_token = self.peek(2).unwrap();
+                                match next_token.token_type {
+                                    TokenType::Ident => {
+                                        let Some(ident_value_token) =
+                                            self.get_ident_value_token(next_token)
+                                        else {
+                                            return Err(Error::new(
+                                                ErrorKind::Other,
+                                                format!("Unknown identifier: {:?}", next_token),
+                                            ));
+                                        };
+                                        println!("{}", ident_value_token.value);
+                                    }
+                                    TokenType::Literal(LiteralType::String) => {
+                                        println!("{}", next_token.value);
+                                    }
+                                    TokenType::Literal(LiteralType::Number) => {
+                                        println!("{}", next_token.value);
+                                    }
+                                    _ => {
+                                        continue;
+                                    }
+                                }
+                                self.consume()?;
+                                // let next_token = self.peek(3).unwrap();
+                                // match next_token.token_type {
+                                //     TokenType::CloseParen => {
+                                //         check_for_semicolon!(self, 3);
+                                //     }
+                                //     _ => {
+                                //         return Err(Error::new(
+                                //             ErrorKind::Other,
+                                //             format!("Expected close paren, got {:?}", next_token),
+                                //         ));
+                                //     }
+                                // };
+                            }
+                            TokenType::Literal(LiteralType::String) => {
+                                println!("{}", next_token.value);
+                            }
+                            TokenType::Literal(LiteralType::Number) => {
+                                println!("{}", next_token.value);
+                            }
+                            _ => {}
+                        }
+                        let next_token = self.peek(2).unwrap();
+                        match next_token.token_type {
+                            TokenType::CloseParen => {
+                                check_for_semicolon!(self, 2);
+                            }
+                            _ => {
                                 return Err(Error::new(
                                     ErrorKind::Other,
-                                    format!("Unknown identifier: {:?}", next_token.value),
+                                    format!("Expected close paren, got {:?}", next_token),
                                 ));
-                            };
-                            match ident_value.token_type {
-                                TokenType::Literal(LiteralType::Number) => {
-                                    println!("{}", ident_value.value.parse::<f32>().unwrap());
-                                }
-                                TokenType::Literal(LiteralType::String) => {
-                                    println!("{}", ident_value.value);
-                                }
-                                _ => {
-                                    panic!()
-                                }
-                            };
-                            check_for_semicolon!(self, 1);
-                            self.consume_times(1)?;
-                        }
-                        TokenType::Literal(LiteralType::String) => {
-                            println!("{}", next_token.value);
-                            check_for_semicolon!(self, 1);
-                        }
-                        TokenType::Literal(LiteralType::Number) => {
-                            println!("{}", next_token.value);
-                            check_for_semicolon!(self, 1);
-                        }
-                        _ => {}
+                            }
+                        };
+                        self.consume_times(3)?;
+                    } else if false {
+                        todo!()
                     }
-                    self.consume_times(2)?;
                 }
                 TokenType::Semicolon => {
                     self.consume()?;

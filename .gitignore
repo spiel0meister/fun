@@ -16,3 +16,4 @@ Cargo.lock
 
 # Fun files
 **/*.fun
+Makefile
