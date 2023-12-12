@@ -3,6 +3,8 @@ use std::io::{Error, ErrorKind};
 use std::env::args;
 use std::fs::read_to_string;
 
+mod tokenizer;
+
 fn get_file_path() -> std::io::Result<String> {
     let args_vec: Vec<String> = args().collect();
 
