@@ -18,6 +18,11 @@ fn get_file_path() -> std::io::Result<String> {
 fn main() -> std::io::Result<()> {
     let filepath = get_file_path()?;
     let content = read_to_string(filepath)?;
-    println!("{}", content);
+
+    let mut main_tokenizer = tokenizer::Tokenizer::new(content);
+    let tokens = main_tokenizer.tokenize()?;
+
+    println!("{tokens:?}");
+
     Ok(())
 }
