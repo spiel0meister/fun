@@ -47,10 +47,12 @@ impl Interpreter {
         Ok(token)
     }
 
-    fn consume_times(&mut self, times: usize) {
+    fn consume_times(&mut self, times: usize) -> std::io::Result<()> {
         for _ in 0..times {
-            self.consume();
+            self.consume()?;
         }
+
+        Ok(())
     }
 
     pub fn interpret(&mut self) -> std::io::Result<()> {
@@ -69,7 +71,7 @@ impl Interpreter {
                                         .insert(ident_token.value.clone(), ident_value.clone());
                                     check_for_semicolon!(self, 3);
 
-                                    self.consume_times(5);
+                                    self.consume_times(5)?;
                                 }
                                 _ => {}
                             }
@@ -97,14 +99,13 @@ impl Interpreter {
                         }
                     };
                     check_for_semicolon!(self, 1);
-                    self.consume_times(3);
+                    self.consume_times(3)?;
                 }
                 TokenType::Semicolon => {
                     self.consume()?;
                 }
                 _ => {
-                    // println!("{:?}", token);
-                    self.consume()?;
+                    panic!("Unhandled token type: {:?}", token.token_type);
                 }
             }
         }
