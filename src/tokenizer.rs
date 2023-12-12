@@ -38,6 +38,8 @@ pub enum TokenType {
     Semicolon,
     OpenParen,
     CloseParen,
+    Colon,
+    Type,
     Keyword(KeywordType),
     Literal(LiteralType),
 }
@@ -170,7 +172,17 @@ impl Tokenizer {
                     self.consume();
                     char = self.peek(0).unwrap();
                 }
-                add_token!(self, TokenType::Ident, builder);
+                match builder.as_str() {
+                    "string" => {
+                        add_token!(self, TokenType::Type, "string".to_string());
+                    }
+                    "number" => {
+                        add_token!(self, TokenType::Type, "number".to_string());
+                    }
+                    _ => {
+                        add_token!(self, TokenType::Ident, builder);
+                    }
+                }
             } else if char == '=' {
                 add_token!(self, TokenType::Assignment, "=".to_string());
                 self.consume();
@@ -183,6 +195,9 @@ impl Tokenizer {
                 self.tokens.push(res);
             } else if char == ';' {
                 add_token!(self, TokenType::Semicolon, ";".to_string());
+                self.consume();
+            } else if char == ':' {
+                add_token!(self, TokenType::Colon, ":".to_string());
                 self.consume();
             } else if char == '(' {
                 add_token!(self, TokenType::OpenParen, "(".to_string());

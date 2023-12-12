@@ -93,8 +93,39 @@ impl Interpreter {
 
                                     self.consume_times(4)?;
                                 }
+                                TokenType::Colon => {
+                                    let type_token = self.peek(3).unwrap();
+                                    match type_token.value.as_str() {
+                                        "string" => {
+                                            self.mem.insert(
+                                                ident_token.value.clone(),
+                                                IdentValue {
+                                                    value: String::new(),
+                                                    type_: LiteralType::String,
+                                                },
+                                            );
+                                        }
+                                        "number" => {
+                                            self.mem.insert(
+                                                ident_token.value.clone(),
+                                                IdentValue {
+                                                    value: String::from("0"),
+                                                    type_: LiteralType::Number,
+                                                },
+                                            );
+                                        }
+                                        _ => {
+                                            return Err(Error::new(
+                                                ErrorKind::Other,
+                                                format!("Unknown type {:?}", type_token),
+                                            ));
+                                        }
+                                    }
+
+                                    self.consume_times(4)?;
+                                }
                                 _ => {}
-                            }
+                            };
                         }
                         _ => {}
                     }
@@ -209,7 +240,7 @@ impl Interpreter {
                     self.consume()?;
                 }
                 _ => {
-                    panic!("Unhandled token type: {:?}", token.token_type);
+                    panic!("Unknown/Unhandled token type: {:?}", token.token_type);
                 }
             }
         }
