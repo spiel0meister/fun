@@ -1,8 +1,14 @@
-use std::{
-    io::{Error, ErrorKind},
-    process::exit,
-};
+use std::io::{Error, ErrorKind};
 
+macro_rules! keyword_case {
+    ($tokenizer:ident, $keyword:literal, $keyword_type:expr) => {
+        $tokenizer.tokens.push(Token::new(
+            TokenType::Keyword($keyword_type),
+            $keyword.to_string(),
+        ));
+        $tokenizer.consume_times($keyword.len());
+    };
+}
 #[derive(Debug, Clone)]
 pub enum KeywordType {
     Let,
@@ -11,7 +17,7 @@ pub enum KeywordType {
 
 #[derive(Debug, Clone)]
 pub enum LiteralType {
-    Int,
+    Number,
     String,
 }
 
@@ -26,8 +32,8 @@ pub enum TokenType {
 
 #[derive(Debug, Clone)]
 pub struct Token {
-    type_type: TokenType,
-    value: String,
+    pub type_type: TokenType,
+    pub value: String,
 }
 
 impl Token {
@@ -51,6 +57,69 @@ impl Tokenizer {
         }
     }
 
+    fn create_literal(&mut self, literal_type: LiteralType) -> std::io::Result<Token> {
+        let Some(mut char) = self.peek(0) else {
+            return Err(Error::new(ErrorKind::Other, "No char"));
+        };
+        let mut builder = String::new();
+        match literal_type {
+            LiteralType::String => {
+                builder.push(char);
+                self.consume();
+                char = self.peek(0).unwrap();
+                while char != '"' {
+                    builder.push(char);
+                    self.consume();
+                    char = self.peek(0).unwrap();
+                }
+                self.consume();
+                Ok(Token::new(TokenType::Literal(LiteralType::String), builder))
+            }
+            LiteralType::Number => {
+                if char == '.' {
+                    builder.push('0');
+                } else {
+                    builder.push(char);
+                }
+                self.consume();
+                char = self.peek(0).unwrap();
+                while char.is_ascii_digit() || char == '.' {
+                    if char == '.' && builder.contains('.') {
+                        return Err(Error::new(
+                            ErrorKind::Other,
+                            "Multiple decimal points in number",
+                        ));
+                    }
+                    builder.push(char);
+                    self.consume();
+                    char = self.peek(0).unwrap();
+                }
+                self.consume();
+                Ok(Token::new(TokenType::Literal(LiteralType::Number), builder))
+            }
+            #[allow(unreachable_patterns)]
+            _ => Err(Error::new(
+                ErrorKind::Other,
+                format!("Unknown literal type: {:?}", literal_type),
+            )),
+        }
+    }
+
+    fn spells_out(&mut self, keyword: &str) -> bool {
+        for (i, c) in keyword.chars().enumerate() {
+            if Some(c) != self.peek(i) {
+                return false;
+            }
+        }
+        true
+    }
+
+    fn consume_times(&mut self, times: usize) -> () {
+        for _ in 0..times {
+            self.consume();
+        }
+    }
+
     fn consume(&mut self) -> char {
         let cur = self.text.chars().nth(self.index).unwrap();
         self.index += 1;
@@ -66,8 +135,6 @@ impl Tokenizer {
     }
 
     pub fn tokenize(&mut self) -> std::io::Result<Vec<Token>> {
-        let chars: Vec<char> = self.text.chars().collect();
-
         while self.peek(0) != None {
             let mut char = self.peek(0).unwrap();
             if char.is_whitespace() {
@@ -79,14 +146,10 @@ impl Tokenizer {
                     char = self.peek(0).unwrap();
                 }
                 continue;
-            } else if char == 'l' && Some('e') == self.peek(1) && Some('t') == self.peek(2) {
-                self.tokens.push(Token::new(
-                    TokenType::Keyword(KeywordType::Let),
-                    "let".to_string(),
-                ));
-                self.consume();
-                self.consume();
-                self.consume();
+            } else if self.spells_out("let") {
+                keyword_case!(self, "let", KeywordType::Let);
+            } else if self.spells_out("print") {
+                keyword_case!(self, "print", KeywordType::Print);
             } else if char.is_ascii_alphabetic() {
                 let mut builder = String::new();
                 builder.push(char);
@@ -102,6 +165,13 @@ impl Tokenizer {
                 self.tokens
                     .push(Token::new(TokenType::Assignment, "=".to_string()));
                 self.consume();
+            } else if char == '"' {
+                let res = self.create_literal(LiteralType::String)?;
+                self.tokens.push(res);
+            } else if char.is_ascii_digit() || char == '.' {
+                self.consume();
+                let res = self.create_literal(LiteralType::Number)?;
+                self.tokens.push(res);
             } else if char == ';' {
                 self.tokens
                     .push(Token::new(TokenType::Semicolon, ";".to_string()));
