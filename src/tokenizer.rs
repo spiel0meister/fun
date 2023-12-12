@@ -14,6 +14,7 @@ macro_rules! keyword_case {
 pub enum KeywordType {
     Let,
     Print,
+    None,
 }
 
 #[derive(Debug, Clone)]
@@ -33,13 +34,13 @@ pub enum TokenType {
 
 #[derive(Debug, Clone)]
 pub struct Token {
-    pub type_type: TokenType,
+    pub token_type: TokenType,
     pub value: String,
 }
 
 impl Token {
-    pub fn new(type_type: TokenType, value: String) -> Self {
-        Self { type_type, value }
+    pub fn new(token_type: TokenType, value: String) -> Self {
+        Self { token_type, value }
     }
 }
 
@@ -127,11 +128,6 @@ impl Tokenizer {
                 self.consume();
                 Ok(Token::new(TokenType::Literal(LiteralType::Number), builder))
             }
-            #[allow(unreachable_patterns)]
-            _ => Err(Error::new(
-                ErrorKind::Other,
-                format!("Unknown literal type: {:?}", literal_type),
-            )),
         }
     }
 
@@ -152,6 +148,8 @@ impl Tokenizer {
                 keyword_case!(self, "let", KeywordType::Let);
             } else if self.spells_out("print") {
                 keyword_case!(self, "print", KeywordType::Print);
+            } else if self.spells_out("none") {
+                keyword_case!(self, "none", KeywordType::None);
             } else if char.is_ascii_alphabetic() {
                 let mut builder = String::new();
                 builder.push(char);
@@ -168,10 +166,10 @@ impl Tokenizer {
                     .push(Token::new(TokenType::Assignment, "=".to_string()));
                 self.consume();
             } else if char == '"' {
+                self.consume();
                 let res = self.create_literal(LiteralType::String)?;
                 self.tokens.push(res);
             } else if char.is_ascii_digit() || char == '.' {
-                self.consume();
                 let res = self.create_literal(LiteralType::Number)?;
                 self.tokens.push(res);
             } else if char == ';' {

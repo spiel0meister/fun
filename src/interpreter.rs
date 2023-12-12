@@ -36,15 +36,28 @@ impl Interpreter {
         while self.peek(0).is_some() {
             let token = self.peek(0).unwrap();
             match token.token_type {
-                TokenType::Ident => {
-                    let next_token = self.peek(1).unwrap();
-                    match next_token.token_type {
-                        TokenType::Assignment => {
-                            let ident_value = self.peek(2).unwrap();
-                            self.mem.insert(token.value.clone(), ident_value.clone());
-                            self.consume()?;
-                            self.consume()?;
-                            self.consume()?;
+                TokenType::Keyword(KeywordType::Let) => {
+                    let ident_token = self.peek(1).unwrap();
+                    match ident_token.token_type {
+                        TokenType::Ident => {
+                            let next_token = self.peek(2).unwrap();
+                            match next_token.token_type {
+                                TokenType::Assignment => {
+                                    let ident_value = self.peek(3).unwrap();
+                                    self.mem
+                                        .insert(ident_token.value.clone(), ident_value.clone());
+                                    self.consume()?;
+                                    self.consume()?;
+                                    self.consume()?;
+                                    self.consume()?;
+                                }
+                                _ => {
+                                    return Err(Error::new(
+                                        ErrorKind::Other,
+                                        format!("Expected assignment, got {:?}", next_token),
+                                    ));
+                                }
+                            }
                         }
                         _ => {}
                     }
@@ -57,7 +70,17 @@ impl Interpreter {
                             format!("Unknown identifier: {:?}", ident.value),
                         ));
                     };
-                    println!("{:?}", ident_value.value);
+                    match ident_value.token_type {
+                        TokenType::Literal(LiteralType::Number) => {
+                            println!("{}", ident_value.value.parse::<f32>().unwrap());
+                        }
+                        TokenType::Literal(LiteralType::String) => {
+                            println!("{}", ident_value.value);
+                        }
+                        _ => {
+                            panic!()
+                        }
+                    };
                     self.consume()?;
                     self.consume()?;
                 }

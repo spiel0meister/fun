@@ -24,6 +24,6 @@ fn main() -> std::io::Result<()> {
     let tokens = main_tokenizer.tokenize()?;
     let mut main_interpreter = interpreter::Interpreter::new(tokens);
 
-    main_interpreter.interpret();
+    main_interpreter.interpret()?;
     Ok(())
 }
