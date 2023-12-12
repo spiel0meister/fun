@@ -9,6 +9,7 @@ macro_rules! keyword_case {
         $tokenizer.consume_times($keyword.len());
     };
 }
+
 #[derive(Debug, Clone)]
 pub enum KeywordType {
     Let,
@@ -135,6 +136,7 @@ impl Tokenizer {
     }
 
     pub fn tokenize(&mut self) -> std::io::Result<Vec<Token>> {
+        self.tokens = Vec::new();
         while self.peek(0) != None {
             let mut char = self.peek(0).unwrap();
             if char.is_whitespace() {
