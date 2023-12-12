@@ -3,6 +3,7 @@ use std::io::{Error, ErrorKind};
 use std::env::args;
 use std::fs::read_to_string;
 
+mod interpreter;
 mod tokenizer;
 
 fn get_file_path() -> std::io::Result<String> {
@@ -21,8 +22,8 @@ fn main() -> std::io::Result<()> {
 
     let mut main_tokenizer = tokenizer::Tokenizer::new(content);
     let tokens = main_tokenizer.tokenize()?;
+    let mut main_interpreter = interpreter::Interpreter::new(tokens);
 
-    println!("{tokens:?}");
-
+    main_interpreter.interpret();
     Ok(())
 }
