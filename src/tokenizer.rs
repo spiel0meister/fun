@@ -57,6 +57,35 @@ impl Tokenizer {
         }
     }
 
+    fn consume(&mut self) -> char {
+        let cur = self.text.chars().nth(self.index).unwrap();
+        self.index += 1;
+        cur
+    }
+
+    fn consume_times(&mut self, times: usize) -> () {
+        for _ in 0..times {
+            self.consume();
+        }
+    }
+
+    fn peek(&self, offset: usize) -> Option<char> {
+        if self.index + offset >= self.text.len() {
+            None
+        } else {
+            Some(self.text.chars().nth(self.index + offset)?)
+        }
+    }
+
+    fn spells_out(&mut self, keyword: &str) -> bool {
+        for (i, c) in keyword.chars().enumerate() {
+            if Some(c) != self.peek(i) {
+                return false;
+            }
+        }
+        true
+    }
+
     fn create_literal(&mut self, literal_type: LiteralType) -> std::io::Result<Token> {
         let Some(mut char) = self.peek(0) else {
             return Err(Error::new(ErrorKind::Other, "No char"));
@@ -102,35 +131,6 @@ impl Tokenizer {
                 ErrorKind::Other,
                 format!("Unknown literal type: {:?}", literal_type),
             )),
-        }
-    }
-
-    fn spells_out(&mut self, keyword: &str) -> bool {
-        for (i, c) in keyword.chars().enumerate() {
-            if Some(c) != self.peek(i) {
-                return false;
-            }
-        }
-        true
-    }
-
-    fn consume_times(&mut self, times: usize) -> () {
-        for _ in 0..times {
-            self.consume();
-        }
-    }
-
-    fn consume(&mut self) -> char {
-        let cur = self.text.chars().nth(self.index).unwrap();
-        self.index += 1;
-        cur
-    }
-
-    fn peek(&self, offset: usize) -> Option<char> {
-        if self.index + offset >= self.text.len() {
-            None
-        } else {
-            Some(self.text.chars().nth(self.index + offset)?)
         }
     }
 
