@@ -5,7 +5,7 @@ For any questions regarding the syntax see the [docs](docs/intro.md).
 
 # Setup
 
-Firstly, download the compiler from the releases (TBD), create a file with a .fun extension, and execute the following command while being in the directory of the compiler:
+Firstly, download the compiler from the releases, create a file with a .fun extension, and execute the following command while being in the directory of the compiler:
 ```bash
 ./fun foo.fun
 ```
