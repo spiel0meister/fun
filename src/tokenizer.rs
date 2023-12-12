@@ -37,8 +37,8 @@ pub struct Token {
 }
 
 impl Token {
-    pub fn new(type_type: TokenType, value: String) -> Token {
-        Token { type_type, value }
+    pub fn new(type_type: TokenType, value: String) -> Self {
+        Self { type_type, value }
     }
 }
 
@@ -49,8 +49,8 @@ pub struct Tokenizer {
 }
 
 impl Tokenizer {
-    pub fn new(text: String) -> Tokenizer {
-        Tokenizer {
+    pub fn new(text: String) -> Self {
+        Self {
             text,
             index: 0,
             tokens: Vec::new(),
