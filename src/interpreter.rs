@@ -77,7 +77,7 @@ impl Interpreter {
                                         return Err(Error::new(
                                             ErrorKind::Other,
                                             format!(
-                                                "Expected literal, got {:?}",
+                                                "Expected literal type, got {:?}",
                                                 ident_value_token
                                             ),
                                         ));
