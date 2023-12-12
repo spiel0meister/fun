@@ -125,7 +125,6 @@ impl Tokenizer {
                     self.consume();
                     char = self.peek(0).unwrap();
                 }
-                self.consume();
                 Ok(Token::new(TokenType::Literal(LiteralType::Number), builder))
             }
         }

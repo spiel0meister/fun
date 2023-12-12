@@ -3,6 +3,21 @@ use std::io::{Error, ErrorKind};
 
 use super::tokenizer::*;
 
+macro_rules! check_for_semicolon {
+    ($interpreter:ident, $peek_depth:literal) => {
+        let next_token = $interpreter.peek($peek_depth + 1).unwrap();
+        match next_token.token_type {
+            TokenType::Semicolon => {}
+            _ => {
+                return Err(Error::new(
+                    ErrorKind::Other,
+                    format!("Expected semicolon, got {:?}", next_token),
+                ));
+            }
+        }
+    };
+}
+
 pub struct Interpreter {
     tokens: Vec<Token>,
     index: usize,
@@ -32,6 +47,12 @@ impl Interpreter {
         Ok(token)
     }
 
+    fn consume_times(&mut self, times: usize) {
+        for _ in 0..times {
+            self.consume();
+        }
+    }
+
     pub fn interpret(&mut self) -> std::io::Result<()> {
         while self.peek(0).is_some() {
             let token = self.peek(0).unwrap();
@@ -46,17 +67,11 @@ impl Interpreter {
                                     let ident_value = self.peek(3).unwrap();
                                     self.mem
                                         .insert(ident_token.value.clone(), ident_value.clone());
-                                    self.consume()?;
-                                    self.consume()?;
-                                    self.consume()?;
-                                    self.consume()?;
+                                    check_for_semicolon!(self, 3);
+
+                                    self.consume_times(5);
                                 }
-                                _ => {
-                                    return Err(Error::new(
-                                        ErrorKind::Other,
-                                        format!("Expected assignment, got {:?}", next_token),
-                                    ));
-                                }
+                                _ => {}
                             }
                         }
                         _ => {}
@@ -81,8 +96,8 @@ impl Interpreter {
                             panic!()
                         }
                     };
-                    self.consume()?;
-                    self.consume()?;
+                    check_for_semicolon!(self, 1);
+                    self.consume_times(3);
                 }
                 TokenType::Semicolon => {
                     self.consume()?;
