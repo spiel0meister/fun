@@ -112,18 +112,6 @@ impl Interpreter {
                                     }
                                 }
                                 self.consume()?;
-                                // let next_token = self.peek(3).unwrap();
-                                // match next_token.token_type {
-                                //     TokenType::CloseParen => {
-                                //         check_for_semicolon!(self, 3);
-                                //     }
-                                //     _ => {
-                                //         return Err(Error::new(
-                                //             ErrorKind::Other,
-                                //             format!("Expected close paren, got {:?}", next_token),
-                                //         ));
-                                //     }
-                                // };
                             }
                             TokenType::Literal(LiteralType::String) => {
                                 println!("{}", next_token.value);
